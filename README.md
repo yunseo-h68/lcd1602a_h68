@@ -25,18 +25,18 @@ See `lib/lcd1602a_h68.h` for more information on how to use it.
 
 int main(void)
 {
-	struct lcd1602a_port port = {&DDRE, &DDRE, &PORTE, &PORTE};
+    struct lcd1602a_port port = {&DDRC, &DDRC, &PORTC, &PORTC};
 
-	set_lcd_bit(4);
-	set_lcd_port(port);
-	lcd_init(LCD_ROWS_MAX - 6, LCD_COLS_MAX);
+    set_lcd_bit(4);
+    set_lcd_port(port);
+    lcd_init(LCD_ROWS_MAX - 6, LCD_COLS_MAX);
 
-	while (1)
+    while (1)
     {
-		lcd_puts("12345678901234567890");
-		_delay_ms(500);
-		lcd_clear();
-		_delay_ms(500);
+        lcd_puts("12345678901234567890");
+        _delay_ms(500);
+        lcd_clear();
+        _delay_ms(500);
     }
 }
 ```
