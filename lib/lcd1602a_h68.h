@@ -41,5 +41,6 @@ uint8_t lcd_move(uint8_t x, uint8_t y);
 uint8_t lcd_putc(const char c);
 uint8_t lcd_puts(const char* str);
 uint8_t lcd_clear();
+uint8_t lcd_create_char(uint8_t location, uint8_t pattern[8]);
 
 #endif /* LCD1602A_H_ */

@@ -22,7 +22,7 @@ static uint8_t lcd_port_init();
 static uint8_t lcd_data(uint8_t byte);
 static uint8_t lcd_command(uint8_t byte);
 
-void set_lcd_port(struct lcd1602a_port port) 
+void set_lcd_port(struct lcd1602a_port port)
 {
 	lcd_port.data_ddr = port.data_ddr;
 	lcd_port.data_port = port.data_port;
@@ -36,18 +36,16 @@ void set_lcd_bit(uint8_t bit)
 }
 
 uint8_t lcd_init(uint8_t rows, uint8_t cols)
-{	
+{
 	lcd_port_init();
 	
 	lcd_limit_rows = rows - 1;
-	lcd_limit_cols = cols;
+	lcd_limit_cols = cols - 1;
 	
-	if (LCD_ROWS_MAX - 1 < lcd_limit_rows) {
-		lcd_limit_rows = LCD_ROWS_MAX - 1;
-	}
-	if (LCD_COLS_MAX < lcd_limit_cols) {
-		lcd_limit_cols = LCD_COLS_MAX;	
-	}
+	if (lcd_limit_rows < 0) lcd_limit_rows = 0;
+	if (lcd_limit_cols < 0) lcd_limit_cols = 0;
+	if (LCD_ROWS_MAX - 1 < lcd_limit_rows) lcd_limit_rows = LCD_ROWS_MAX - 1;
+	if (LCD_COLS_MAX - 1 < lcd_limit_cols) lcd_limit_cols = LCD_COLS_MAX - 1;
 	
 	_delay_ms(30);
 	
@@ -56,7 +54,7 @@ uint8_t lcd_init(uint8_t rows, uint8_t cols)
 		_delay_us(39);
 	}
 	
-	lcd_command(0x20 | ((lcd_bit == 8) << 4) | (cols - 1) << 3);
+	lcd_command(0x20 | ((lcd_bit == 8) << 4) | (lcd_limit_cols << 3));
 	_delay_us(39);
 	lcd_command(0x0C);
 	_delay_us(39);
@@ -74,40 +72,21 @@ uint8_t lcd_init(uint8_t rows, uint8_t cols)
 
 uint8_t lcd_move(uint8_t x, uint8_t y)
 {
-	int i;
+	lcd_cursor_x = x % (lcd_limit_rows + 1);
+	lcd_cursor_y = x > lcd_limit_rows ? (LCD_COLS_MAX - 1) : y % (lcd_limit_cols + 1);
 	
-	lcd_cursor_x = x;
-	lcd_cursor_y = y;
-	
-	if (lcd_cursor_x > lcd_limit_rows) {
-		lcd_cursor_x = lcd_cursor_x % lcd_limit_rows - 1;
-		lcd_cursor_y = 2;
-		x = lcd_cursor_x;
-		y = lcd_cursor_y;
-	}
-	
-		
-	lcd_command(0x02);
-	_delay_ms(1.53);
-	
-	for (i = 0; i < x + (y-1) * 40; i++) {
-		lcd_command(0x14);
-		_delay_us(39);
-	}
+	lcd_command(0x80 + lcd_cursor_x + lcd_cursor_y * 0x40);
+	_delay_us(39);
 	
 	return 0;
 }
 
 uint8_t lcd_putc(const char c)
 {
+	lcd_move(lcd_cursor_x, lcd_cursor_y);
 	lcd_data(c);
-	
 	lcd_cursor_x++;
-	
-	if (lcd_cursor_x > lcd_limit_rows) {
-		lcd_move(lcd_cursor_x, lcd_cursor_y);
-	}
-	
+	lcd_move(lcd_cursor_x, lcd_cursor_y);
 	return 0;
 }
 
@@ -132,6 +111,20 @@ uint8_t lcd_clear()
 	return 0;
 }
 
+
+uint8_t lcd_create_char(uint8_t location, uint8_t pattern[8])
+{
+	int i;
+	
+	lcd_command(0x40 + (location & 0x07) * 8);
+	
+	for (i = 0; i <  8; i++) {
+		lcd_data(pattern[i] & 0x1F);
+	}
+	
+	return 0;
+}
+
 static uint8_t lcd_port_init()
 {
 	
@@ -152,13 +145,13 @@ static uint8_t lcd_port_init()
 }
 
 static uint8_t lcd_data(uint8_t byte)
-{	
+{
 	_delay_ms(2);
 	
 	if (lcd_bit == 8) {
 		*(lcd_port.data_port) = byte;
 		*(lcd_port.rsrwe_port) &= ~0x03;
-		*(lcd_port.rsrwe_port) |= 0x01; 
+		*(lcd_port.rsrwe_port) |= 0x01;
 		_delay_us(1);
 		*(lcd_port.rsrwe_port) |= 0x04;
 		_delay_us(1);
@@ -166,7 +159,7 @@ static uint8_t lcd_data(uint8_t byte)
 		
 		return 0;
 	} else if (lcd_bit == 4) {
-		*(lcd_port.data_port) &= ~0xf0;	
+		*(lcd_port.data_port) &= ~0xf0;
 		*(lcd_port.data_port) |= byte & 0xf0;
 		*(lcd_port.rsrwe_port) &= ~0x03;
 		*(lcd_port.rsrwe_port) |= 0x01;
@@ -190,7 +183,7 @@ static uint8_t lcd_data(uint8_t byte)
 }
 
 static uint8_t lcd_command(uint8_t byte)
-{	
+{
 	_delay_ms(2);
 	
 	if (lcd_bit == 8) {
