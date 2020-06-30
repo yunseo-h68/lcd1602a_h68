@@ -117,9 +117,36 @@ uint8_t lcd_create_char(uint8_t location, uint8_t pattern[8])
 	int i;
 	
 	lcd_command(0x40 + (location & 0x07) * 8);
+	_delay_us(39);
 	
 	for (i = 0; i <  8; i++) {
 		lcd_data(pattern[i] & 0x1F);
+	}
+	
+	return 0;
+}
+
+uint8_t lcd_display_shift(uint8_t direction)
+{
+	lcd_display_shift_str(direction, 0);
+}
+
+uint8_t lcd_display_shift_str(uint8_t direction, uint8_t str_size)
+{
+	int i;
+	static int count = -1;
+	
+	count ++;
+	
+	lcd_command(0x18 | ((direction & 0x01) << 2));
+	_delay_us(39);
+	
+	if (count > lcd_limit_rows) {
+		for (i = 0; i < count + 1 + str_size; i++) {
+			lcd_command(0x18 | ((!direction & 0x01) << 2));
+			_delay_us(39);
+		}
+		count = -1 - str_size;
 	}
 	
 	return 0;
