@@ -2,7 +2,8 @@ example/lcd1602a_h68.c
 example/lcd1602a_h68.h
 example2/lcd1602a_h68.c
 example2/lcd1602a_h68.h
-
+example3/lcd1602a_h68.c
+example3/lcd1602a_h68.h
 
 # Created by https://www.gitignore.io/api/c,c++,atmelstudio,visualstudio
 # Edit at https://www.gitignore.io/?templates=c,c++,atmelstudio,visualstudio
